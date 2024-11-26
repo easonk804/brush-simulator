@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>毛笔模拟系统</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="毛笔模拟">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="theme-color" content="#000000">
+        
+        <!-- iOS 图标 -->
+        <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+        <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png">
+        
+        <!-- iOS 启动画面 -->
+        <link rel="apple-touch-startup-image" href="icons/launch-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+        <link rel="apple-touch-startup-image" href="icons/launch-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+        <link rel="apple-touch-startup-image" href="icons/launch-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+        <link rel="apple-touch-startup-image" href="icons/launch-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+        
+        <link rel="manifest" href="manifest.json">
+        <link rel="stylesheet" href="style.css"> <!--导入CSS文件-->
+        
+        <script>
+            // 禁用双击缩放
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            }, { passive: false });
+            
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, { passive: false });
+
+            // 注册 Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(registration => console.log('ServiceWorker registration successful'))
+                        .catch(err => console.log('ServiceWorker registration failed: ', err));
+                });
+            }
+        </script>
+    </head>
+
+    <body>
+        <div class="container">
+            <!-- 菜单栏 -->
+            <div class="menu-bar">
+                <button onclick="newFile()">新建</button>
+                <button onclick="openFile()">打开</button>
+                <button onclick="saveFile()">保存</button>
+                <button onclick="clickme()">连接</button>
+                <button onclick="window.location.href=window.location.href;">重测</button>
+                <button onclick="showHelp()">帮助</button>
+            </div>
+
+            <div class="main-content">
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <button id="brushTool">笔刷</button>
+                    <button id="eraserTool">橡皮擦</button>
+                    <input type="color" id="colorPicker" value="#000000">
+                    <button id="undoBtn">撤销</button>
+                    <button id="redoBtn">重做</button>
+                </div>
+                <!-- 画布容器 -->
+                <div class="canvas-container">
+                    <div class="layer-container" id="layerContainer">
+                        <!-- 画布将通过JS动态添加 -->
+                        <canvas id="canvas" width="800" height="600"></canvas>
+                    </div>
+                    <!--控制器面板-->
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>X轴加速度（a_X）</label>
+                            <input type="range" id="ax" min="-10" max="10" value="0" step="0.1">
+                            <span id="ax-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>X轴偏角（α）</label>
+                            <input type="range" id="alpha" min="0" max="360" value="0">
+                            <span id="alpha-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Y轴加速度（a_Y）</label>
+                            <input type="range" id="ay" min="-10" max="10" value="0" step="0.1">
+                            <span id="ay-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Y轴偏角（θ）</label>
+                            <input type="range" id="theta" min="0" max="360" value="0">
+                            <span id="theta-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Z轴加速度（a_Z）</label>
+                            <input type="range" id="az" min="-10" max="10" value="0" step="0.1">
+                            <span id="az-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Z轴偏角（β）</label>
+                            <input type="range" id="beta" min="0" max="360" value="0">
+                            <span id="beta-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>笔头弯曲量（ΔL）</label>
+                            <input type="range" id="deltaL" min="0" max="20" value="0" step="0.1">
+                            <span id="deltaL-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label>最小宽度（Min Width）</label>
+                            <input type="range" id="minWidth" min="1" max="5" value="2" step="0.5">
+                            <span id="minWidth-value">2</span>
+                        </div>
+                        <div class="control-group">
+                            <label>最大宽度（Max Width）</label>
+                            <input type="range" id="maxWidth" min="5" max="20" value="10" step="0.5">
+                            <span id="maxWidth-value">10</span>
+                        </div>
+                        <div class="control-group">
+                            <label>当前宽度（Width）</label>
+                            <input type="range" id="width" min="2" max="10" value="6" step="0.5">
+                            <span id="width-value">6</span>
+                        </div>
+                        <div class="control-group">
+                            <label>压力（Pressure）</label>
+                            <input type="range" id="pressure" min="0" max="1" value="0.5" step="0.1">
+                            <span id="pressure-value">0.5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 状态栏 -->
+            <div class="status-bar">
+                <div class="status-content">
+                    <div class="data-canvas">
+                        <span id="canvasSize">画布尺寸: 800x600</span>
+                        <span id="zoomLevel">缩放: 100%</span>
+                        <span id="performance">FPS: 60</span>
+                    </div>
+                </div>
+                <div class="status-content">
+                    <div class="data-form">
+                        <span>系统ID：</span>
+                        <span>产品型号：</span>
+                        <span>固件版本：</span>
+                        <span>硬件版本：</span>
+                        <span>软件版本：</span>
+                        <span>公司名称：</span>
+                    </div>
+                    <div class="data-form">
+                        <span id="targetSystemID"></span>
+                        <span id="targetModelNumber"></span>
+                        <span id="targetFirmwareRevision"></span>
+                        <span id="targetHardwareRevision"></span>
+                        <span id="targetSoftwareRevision"></span>
+                        <span id="targetManfacturerName"></span>
+                    </div>
+                    <div class="data-form">
+                        <span id="systemID"></span>
+                        <span id="modelNumber"></span>
+                        <span id="firmwareRevision"></span>
+                        <span id="hardwareRevision"></span>
+                        <span id="softwareRevision"></span>
+                        <span id="manfacturerName"></span>
+                    </div>
+                    <div class="data-form">
+                        <span>信号强度：</span>
+                        <span>充电状态：</span>
+                        <span>Boot按键</span>
+                        <span>Power按键</span>
+                        <span>电池电压：</span>
+                        <span>电阻电压</span>
+                        <span>加速度计XYZ：</span>
+                        <span>陀螺仪XYZ：</span>
+                        <span>roll：</span>
+                        <span>pitch：</span>
+                        <span>yaw：</span>
+                    </div>
+                    <div class="data-form">
+                        <span id="targetRSSI"></span>
+                        <span id="targetCharge"></span>
+                        <span> - </span>
+                        <span> - </span>
+                        <span id="targetBatVcc"></span>
+                        <span> - </span>
+                        <span> - </span>
+                        <span> - </span>
+                        <span> - </span>
+                        <span> - </span>
+                        <span> - </span>
+                    </div>
+                    <div class="data-form">
+                        <span id="RSSI"></span>
+                        <span id="charge"></span>
+                        <span id="bootBtn"></span>
+                        <span id="pwrBtn"></span>
+                        <span id="batVcc"></span>
+                        <span id="rVcc"></span>
+                        <span id="acc"></span>
+                        <span id="gyro"></span>
+                        <span id="roll"></span>
+                        <span id="pitch"></span>
+                        <span id="yaw"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加 JavaScript 文件引用 -->
+         <script src="brush.js"></script>
+         <script src="main.js"></script>
+         <script src="bluetooth.js"></script>
+    </body>
+</html>
