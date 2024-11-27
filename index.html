@@ -12,15 +12,15 @@
         
         <!-- iOS 图标 -->
         <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-        <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
-        <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
-        <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png">
+        <link rel="apple-touch-icon" href="icons/icon-512x512.png">
+        <!-- <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+        <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png"> -->
         
-        <!-- iOS 启动画面 -->
+        <!-- iOS 启动画面
         <link rel="apple-touch-startup-image" href="icons/launch-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
         <link rel="apple-touch-startup-image" href="icons/launch-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
         <link rel="apple-touch-startup-image" href="icons/launch-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
-        <link rel="apple-touch-startup-image" href="icons/launch-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+        <link rel="apple-touch-startup-image" href="icons/launch-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"> -->
         
         <link rel="manifest" href="manifest.json">
         <link rel="stylesheet" href="style.css"> <!--导入CSS文件-->
@@ -245,41 +245,6 @@
         <!-- 添加 JavaScript 文件引用 -->
          <script src="brush.js"></script>
          <script src="main.js"></script>
-         <script type="module">
-            (async () => {  
-                try {
-                    const module = await import('./bluetooth.js');
-                    if (!module || !module.clickme) {
-                        console.error('bluetooth.js 模块加载失败或 clickme 函数未找到');
-                        alert('蓝牙模块加载失败，请确保通过Web服务器访问页面');
-                        return;
-                    }
-                    
-                    const { clickme } = module;
-                    
-                    // 确保DOM加载完成后再添加事件监听器
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const connectButton = document.getElementById('connectButton');
-                        if (connectButton) {
-                            console.log('找到连接按钮，添加点击事件监听器');
-                            connectButton.addEventListener('click', async () => {
-                                try {
-                                    await clickme();
-                                } catch (error) {
-                                    console.error('蓝牙连接错误:', error);
-                                    alert('蓝牙连接失败: ' + error.message);
-                                }
-                            });
-                        } else {
-                            console.error('连接按钮未找到！');
-                            alert('页面加载错误：未找到连接按钮');
-                        }
-                    });
-                } catch (error) {
-                    console.error('模块加载错误:', error);
-                    alert('蓝牙模块加载失败: ' + error.message);
-                }
-            })();
-         </script>
+         <script type="module" src="bluetooth.js"></script>
     </body>
 </html>
