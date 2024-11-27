@@ -54,7 +54,7 @@ const domElements = {
 };
 
 /* 页面加载完成后初始化 */
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('targetSystemID').innerText = TARGET_CONFIG.DEVICE.SYSTEM_ID;
     document.getElementById('targetModelNumber').innerText = TARGET_CONFIG.DEVICE.MODEL;
     document.getElementById('targetFirmwareRevision').innerText = TARGET_CONFIG.VERSION.FIRMWARE;
@@ -64,7 +64,7 @@ window.onload = function() {
     document.getElementById('targetRSSI').innerText = TARGET_CONFIG.PERFORMANCE.RSSI.TARGET;
     document.getElementById('targetCharge').innerText = 1;
     document.getElementById('targetBatVcc').innerText = TARGET_CONFIG.PERFORMANCE.BATTERY.TARGET_VOLTAGE;
-};
+});
 
 // 导出clickme函数
 export async function clickme() {
