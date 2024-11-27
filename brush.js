@@ -13,8 +13,19 @@ class BrushSimulator {
     static TEMP_CANVAS = document.createElement('canvas');
     static TEMP_CTX = BrushSimulator.TEMP_CANVAS.getContext('2d');
 
+    // 应变片参数
+    static STRAIN_GAUGE = {
+        INITIAL_RESISTANCE: 500,  // 初始电阻值 (Ω)
+        INITIAL_LENGTH: 20,       // 初始长度 (mm)
+    };
+
     constructor(canvas) {
-        /* 构造器 */
+        /* 
+        主要功能：构造器，初始化画布和绘画控制参数
+
+        参数）
+        - canvas: HTMLCanvasElement，要绘制的画布元素
+        */
 
         // 获取基本元素
         this.canvas = canvas; 
@@ -77,7 +88,9 @@ class BrushSimulator {
     }
 
     static getTempContext() {
-        /* 获取临时画布上下文的方法 */
+        /* 
+        主要功能：获取临时画布的2D渲染上下文
+        */
 
         if (!BrushSimulator.TEMP_CTX) {
             BrushSimulator.TEMP_CTX = BrushSimulator.TEMP_CANVAS.getContext('2d');
@@ -86,14 +99,18 @@ class BrushSimulator {
     }
 
     static clearTempCanvas() {
-        /* 清理临时画布的方法 */
+        /* 
+        主要功能：清除临时画布上的所有内容
+        */
 
         const ctx = BrushSimulator.getTempContext();
         ctx.clearRect(0, 0, BrushSimulator.TEMP_CANVAS.width, BrushSimulator.TEMP_CANVAS.height);
     }
 
     handleCanvasResize() {
-        /* 处理画布尺寸变化的方法 */
+        /* 
+        主要功能：处理画布尺寸变化，重置画布属性并清理缓存
+        */
 
         const rect = this.canvas.getBoundingClientRect();
         this.canvas.width = rect.width;
@@ -108,7 +125,9 @@ class BrushSimulator {
     }
 
     setupListeners() {
-        /* 设置监听事件的方法 */
+        /* 
+        主要功能：设置画布的鼠标事件监听器
+        */
 
         // 鼠标左键按下事件 
         this.canvas.addEventListener('mousedown', (e) => {
@@ -141,15 +160,12 @@ class BrushSimulator {
 
     draw(e) {
         /* 
-        主要功能：
-        - 更新当前位置
-        - 计算笔触效果
-        - 使用插值绘制平滑的线条
+        主要功能：更新当前位置，计算笔触效果，并使用插值绘制平滑的线条
 
         参数）
-        - e: 鼠标事件
+        - e: MouseEvent，鼠标事件对象，包含位置信息
         */
-        
+
         // 检查绘画状态
         if (!this.isDrawing) return;
 
@@ -175,10 +191,10 @@ class BrushSimulator {
 
     startDrawing(e) {
         /* 
-        主要功能：开始绘画控制
+        主要功能：开始绘画控制，初始化起始点和绘制路径
 
         参数）
-        - e: 鼠标事件
+        - e: MouseEvent，鼠标事件对象，包含位置信息
         */
 
         // 修改绘画控制参数
@@ -205,9 +221,6 @@ class BrushSimulator {
     stopDrawing() {
         /* 
         主要功能：结束绘画控制
-
-        参数）
-        - e: 鼠标事件
         */
 
         // 修改绘画控制参数
@@ -219,11 +232,11 @@ class BrushSimulator {
 
     setCurrent(x, y) {
         /* 
-        主要功能：更新当前位置
+        主要功能：更新当前位置，计算距离和中间点，并根据距离选择绘制方法
 
         参数）
-        - x: X坐标
-        - y: Y坐标
+        - x: number，当前X坐标
+        - y: number，当前Y坐标
         */
 
         if (!this.isDrawing) return;
@@ -266,13 +279,11 @@ class BrushSimulator {
 
     drawTo(canvas, brushEffect) {
         /* 
-        主要功能: 
-        - 绘制路径
-        - 应用笔刷效果
+        主要功能：绘制路径并应用笔刷效果
 
         参数）
-        - canvas: 画布
-        - brushEffect: 笔触效果（可选，如果未提供则使用calculateBrushEffect计算）
+        - canvas: HTMLCanvasElement，要绘制的画布
+        - brushEffect: object，笔触效果对象，包含width、angle、pressure等属性
         */
 
         if (!this.drawPath) return;
@@ -326,13 +337,14 @@ class BrushSimulator {
 
     calculateBrushEffect() {
         /* 
-        主要功能：计算笔触效果
+        主要功能：计算笔触效果，包括宽度、角度、压力和倾斜
 
         返回值）
-        - width: 笔触宽度
-        - angle: 笔触旋转角度
-        - pressure: 压力效果
-        - tilt: 倾斜效果
+        - object: 包含以下属性的对象：
+          * width: number，笔触宽度
+          * angle: number，笔触旋转角度
+          * pressure: number，压力效果（0-1）
+          * tilt: number，倾斜效果（0-1）
         */
 
         // 将各个轴的旋转角度转换为弧度
@@ -372,17 +384,22 @@ class BrushSimulator {
         };
     }
 
-    toggleEraser() {
-        /* 切换橡皮擦模式 */
+    calculateLengthChange(currentResistance) {
+        /* 
+        主要功能：根据应变片电阻值计算长度变化
 
-        this.isEraser = !this.isEraser;
-        if (this.isEraser) {
-            this._savedColor = this.color;
-            this.color = this.eraserColor;
-        } else {
-            this.color = this._savedColor;
-        }
-        console.log('Eraser mode:', this.isEraser);
+        参数）
+        - currentResistance: number，当前电阻值（Ω）
+
+        返回值）
+        - number: 长度变化值（mm）
+        */
+
+        const deltaR = currentResistance - BrushSimulator.STRAIN_GAUGE.INITIAL_RESISTANCE;
+        const rRatio = deltaR / BrushSimulator.STRAIN_GAUGE.INITIAL_RESISTANCE;
+        // 由于ΔR/R₀与ΔL/L₀成正比，可以直接用比例关系计算长度变化
+        const lengthChange = rRatio * BrushSimulator.STRAIN_GAUGE.INITIAL_LENGTH;
+        return lengthChange;
     }
 
     hexToRgb(hex) {
@@ -390,12 +407,13 @@ class BrushSimulator {
         主要功能：将十六进制颜色转换为 RGB 值
 
         参数）
-        - hex: 十六进制颜色字符串（#RRGGBB）
+        - hex: string，十六进制颜色字符串（例如：'#RRGGBB'或'#RGB'）
 
         返回值）
-        - r: 红色值
-        - g: 绿色值
-        - b: 蓝色值
+        - object: 包含以下属性的对象：
+          * r: number，红色值（0-255）
+          * g: number，绿色值（0-255）
+          * b: number，蓝色值（0-255）
         */
 
         // 去掉可能的前缀 #
@@ -421,7 +439,7 @@ class BrushSimulator {
         主要功能：更新笔刷颜色
 
         参数）
-        - newColor: 新的十六进制颜色字符串
+        - newColor: string，新的十六进制颜色字符串（例如：'#RRGGBB'）
         */
 
         console.log(newColor);
@@ -436,7 +454,11 @@ class BrushSimulator {
         主要功能：更新笔触参数
 
         参数）
-        - params: 参数对象
+        - params: object，包含以下可选属性的对象：
+          * width: number，笔触宽度
+          * minWidth: number，最小笔触宽度
+          * maxWidth: number，最大笔触宽度
+          * pressure: number，压力值（0-1）
         */
 
         // 参数验证
@@ -457,7 +479,9 @@ class BrushSimulator {
     }
 
     clearCache() {
-        /* 清除缓存的方法 */
+        /* 
+        主要功能：清理路径缓存，当缓存大小超过最大限制时移除旧条目
+        */
         
         if (this.pathCache.size > BrushSimulator.MAX_CACHE_SIZE) {
             const entriesToRemove = [...this.pathCache.entries()]
@@ -467,7 +491,9 @@ class BrushSimulator {
     }
 
     debugDraw() {
-        /* 调试的方法 */
+        /* 
+        主要功能：输出当前笔触参数和效果的调试信息
+        */
         console.log('当前笔触参数：', {
             width: this.params.width,
             mindWidth: this.params.minWidth,
