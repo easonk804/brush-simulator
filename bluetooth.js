@@ -187,3 +187,22 @@ export async function clickme() {
         updateConnectionStatus('连接失败');
     }
 }
+
+// 初始化连接按钮
+document.addEventListener('DOMContentLoaded', () => {
+    const connectButton = document.getElementById('connectButton');
+    if (connectButton) {
+        console.log('找到连接按钮，添加点击事件监听器');
+        connectButton.addEventListener('click', async () => {
+            try {
+                await clickme();
+            } catch (error) {
+                console.error('蓝牙连接错误:', error);
+                alert('蓝牙连接失败: ' + error.message);
+            }
+        });
+    } else {
+        console.error('连接按钮未找到！');
+        alert('页面加载错误：未找到连接按钮');
+    }
+});
